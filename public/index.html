@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MongoDB Messages Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+    <h1>MongoDB Messages</h1>
+    <div class="subtitle">Capture and review messages stored in your MongoDB collection.</div>
+
+    <div class="form-row">
+        <div class="form-field">
+            <label for="messageInput">Message</label>
+            <input type="text" id="messageInput" placeholder="Enter message">
+        </div>
+        <div class="form-field">
+            <label for="locationInput">Location</label>
+            <input type="text" id="locationInput" placeholder="City / Region">
+        </div>
+        <div class="form-field">
+            <label for="countryInput">Country</label>
+            <input type="text" id="countryInput" placeholder="Country">
+        </div>
+        <div class="form-field">
+            <label for="dobInput">Date of birth</label>
+            <input type="date" id="dobInput">
+        </div>
+        <div class="form-field">
+            <label for="addressInput">Address</label>
+            <input type="text" id="addressInput" placeholder="Street / Address line">
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveOrUpdate()">Save record</button>
+        <button class="btn btn-secondary" id="cancelEditBtn" style="display: none;" onclick="cancelEdit()">Cancel edit</button>
+        <button class="btn btn-secondary" onclick="loadMessages()">Refresh data</button>
+    </div>
+    <input type="hidden" id="editId" value="">
+
+    <div class="table-card">
+        <div class="table-header">
+            <div class="table-header-title">Stored messages</div>
+            <div class="table-header-caption">Live view of documents in the <span class="pill">messages</span> collection.</div>
+        </div>
+        <table id="messagesTable">
+            <thead>
+                <tr>
+                    <th>Message</th>
+                    <th>Location</th>
+                    <th>Country</th>
+                    <th>DOB</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="messagesBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function getMessageId(item) {
+    if (!item || item._id == null) return '';
+    if (typeof item._id === 'string') return item._id;
+    if (typeof item._id === 'object' && item._id.$oid) return item._id.$oid;
+    return String(item._id);
+}
+
+function sendMessage() {
+    const message = document.getElementById("messageInput").value;
+    const location = document.getElementById("locationInput").value;
+    const country = document.getElementById("countryInput").value;
+    const dob = document.getElementById("dobInput").value;
+    const address = document.getElementById("addressInput").value;
+
+    fetch('/api/message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, location, country, dob, address})
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Saved!");
+    });
+}
+
+function loadMessages() {
+    fetch('/api/messages')
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("messagesBody");
+        tbody.innerHTML = "";
+
+        data.forEach(item => {
+            const tr = document.createElement("tr");
+
+            const tdMessage = document.createElement("td");
+            tdMessage.textContent = item.message || '';
+            tr.appendChild(tdMessage);
+
+            const tdLocation = document.createElement("td");
+            tdLocation.textContent = item.location || '';
+            tr.appendChild(tdLocation);
+
+            const tdCountry = document.createElement("td");
+            tdCountry.textContent = item.country || '';
+            tr.appendChild(tdCountry);
+
+            const tdDob = document.createElement("td");
+            tdDob.textContent = item.dob || '';
+            tr.appendChild(tdDob);
+
+            const tdAddress = document.createElement("td");
+            tdAddress.textContent = item.address || '';
+            tr.appendChild(tdAddress);
+
+            const tdActions = document.createElement("td");
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn btn-secondary";
+            editBtn.textContent = "Edit";
+            editBtn.onclick = () => editMessage(item);
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn btn-secondary";
+            delBtn.textContent = "Delete";
+            delBtn.onclick = () => deleteMessage(getMessageId(item));
+            tdActions.appendChild(editBtn);
+            tdActions.appendChild(delBtn);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+function editMessage(item) {
+    document.getElementById("messageInput").value = item.message || '';
+    document.getElementById("locationInput").value = item.location || '';
+    document.getElementById("countryInput").value = item.country || '';
+    document.getElementById("dobInput").value = item.dob || '';
+    document.getElementById("addressInput").value = item.address || '';
+    document.getElementById("editId").value = getMessageId(item);
+    document.getElementById("saveBtn").textContent = "Update";
+    document.getElementById("cancelEditBtn").style.display = "inline-flex";
+}
+
+function cancelEdit() {
+    document.getElementById("editId").value = '';
+    document.getElementById("saveBtn").textContent = "Save record";
+    document.getElementById("cancelEditBtn").style.display = "none";
+    document.getElementById("messageInput").value = '';
+    document.getElementById("locationInput").value = '';
+    document.getElementById("countryInput").value = '';
+    document.getElementById("dobInput").value = '';
+    document.getElementById("addressInput").value = '';
+}
+
+function saveOrUpdate() {
+    const editId = document.getElementById("editId").value;
+    const message = document.getElementById("messageInput").value;
+    const location = document.getElementById("locationInput").value;
+    const country = document.getElementById("countryInput").value;
+    const dob = document.getElementById("dobInput").value;
+    const address = document.getElementById("addressInput").value;
+    const payload = { message, location, country, dob, address };
+
+    if (editId) {
+        fetch('/api/message/' + encodeURIComponent(editId), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json().then(data => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+            if (ok && data.success) {
+                alert("Updated!");
+                cancelEdit();
+                loadMessages();
+            } else {
+                alert(data.error || "Update failed");
+            }
+        })
+        .catch(() => alert("Update failed"));
+    } else {
+        fetch('/api/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("Saved!");
+            loadMessages();
+        });
+    }
+}
+
+function deleteMessage(id) {
+    if (!confirm("Delete this record?")) return;
+    fetch('/api/message/' + id, { method: 'DELETE' })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            loadMessages();
+        } else alert(data.error || "Delete failed");
+    });
+}
+</script>
+
+</body>
+</html>
