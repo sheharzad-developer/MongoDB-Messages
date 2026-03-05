@@ -25,13 +25,15 @@ The app listens on **http://localhost:3000**. Open this URL in a browser to use 
 
 ## Project structure
 
-- `nginx-node-app/`
-  - `server.js` — Express server, MongoDB connection, API routes
-  - `public/`
-    - `index.html` — Dashboard UI
-    - `style.css` — Styles
-  - `package.json`
-  - `README.md`
+```
+nginx-node-app/
+├── server.js          # Express server + MongoDB + API routes
+├── public/
+│   ├── index.html     # Dashboard UI
+│   └── style.css      # Styles
+├── package.json
+└── README.md
+```
 
 ## API
 
