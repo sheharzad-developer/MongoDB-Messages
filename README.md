@@ -47,7 +47,3 @@ nginx-node-app/
 - **Database:** `myDatabase`
 - **Collection:** `messages`
 - All fields are optional; empty or missing values are stored as empty strings.
-
-## License
-
-ISC
