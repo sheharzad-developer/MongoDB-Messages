@@ -73,6 +73,25 @@ h1 {
     background: #020617;
 }
 
+.radio-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.radio-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #e5e7eb;
+    cursor: pointer;
+}
+
+.radio-label input[type="radio"] {
+    accent-color: #3b82f6;
+}
+
 .actions {
     display: flex;
     gap: 10px;

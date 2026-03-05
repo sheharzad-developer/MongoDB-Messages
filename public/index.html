@@ -31,6 +31,13 @@
             <label for="addressInput">Address</label>
             <input type="text" id="addressInput" placeholder="Street / Address line">
         </div>
+        <div class="form-field">
+            <label>Gender</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="gender" value="male" id="genderMale"> Male</label>
+                <label class="radio-label"><input type="radio" name="gender" value="female" id="genderFemale"> Female</label>
+            </div>
+        </div>
     </div>
 
     <div class="actions">
@@ -53,6 +60,7 @@
                     <th>Country</th>
                     <th>DOB</th>
                     <th>Address</th>
+                    <th>Gender</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -76,13 +84,14 @@ function sendMessage() {
     const country = document.getElementById("countryInput").value;
     const dob = document.getElementById("dobInput").value;
     const address = document.getElementById("addressInput").value;
+    const gender = getGenderValue();
 
     fetch('/api/message', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message, location, country, dob, address})
+        body: JSON.stringify({ message, location, country, dob, address, gender })
     })
     .then(res => res.json())
     .then(data => {
@@ -120,6 +129,10 @@ function loadMessages() {
             tdAddress.textContent = item.address || '';
             tr.appendChild(tdAddress);
 
+            const tdGender = document.createElement("td");
+            tdGender.textContent = item.gender ? (item.gender === 'male' ? 'Male' : item.gender === 'female' ? 'Female' : item.gender) : '';
+            tr.appendChild(tdGender);
+
             const tdActions = document.createElement("td");
             const editBtn = document.createElement("button");
             editBtn.className = "btn btn-secondary";
@@ -138,12 +151,28 @@ function loadMessages() {
     });
 }
 
+function getGenderValue() {
+    const male = document.getElementById("genderMale");
+    const female = document.getElementById("genderFemale");
+    if (male && male.checked) return 'male';
+    if (female && female.checked) return 'female';
+    return '';
+}
+
+function setGenderValue(value) {
+    const male = document.getElementById("genderMale");
+    const female = document.getElementById("genderFemale");
+    if (male) male.checked = (value === 'male');
+    if (female) female.checked = (value === 'female');
+}
+
 function editMessage(item) {
     document.getElementById("messageInput").value = item.message || '';
     document.getElementById("locationInput").value = item.location || '';
     document.getElementById("countryInput").value = item.country || '';
     document.getElementById("dobInput").value = item.dob || '';
     document.getElementById("addressInput").value = item.address || '';
+    setGenderValue(item.gender || '');
     document.getElementById("editId").value = getMessageId(item);
     document.getElementById("saveBtn").textContent = "Update";
     document.getElementById("cancelEditBtn").style.display = "inline-flex";
@@ -158,6 +187,7 @@ function cancelEdit() {
     document.getElementById("countryInput").value = '';
     document.getElementById("dobInput").value = '';
     document.getElementById("addressInput").value = '';
+    setGenderValue('');
 }
 
 function saveOrUpdate() {
@@ -167,7 +197,8 @@ function saveOrUpdate() {
     const country = document.getElementById("countryInput").value;
     const dob = document.getElementById("dobInput").value;
     const address = document.getElementById("addressInput").value;
-    const payload = { message, location, country, dob, address };
+    const gender = getGenderValue();
+    const payload = { message, location, country, dob, address, gender };
 
     if (editId) {
         fetch('/api/message/' + encodeURIComponent(editId), {

@@ -22,14 +22,15 @@ connectDB();
 
 // POST API - Save message
 app.post('/api/message', async (req, res) => {
-    const { message, location, country, dob, address } = req.body;
+    const { message, location, country, dob, address, gender } = req.body;
 
     const doc = {
         message: message || '',
         location: location ?? '',
         country: country ?? '',
         dob: dob ?? '',
-        address: address ?? ''
+        address: address ?? '',
+        gender: gender ?? ''
     };
     console.log('Saving to MongoDB:', doc);
 
@@ -57,7 +58,7 @@ app.get('/api/messages', async (req, res) => {
 // PUT API - Update message
 app.put('/api/message/:id', async (req, res) => {
     const { id } = req.params;
-    const { message, location, country, dob, address } = req.body;
+    const { message, location, country, dob, address, gender } = req.body;
 
     if (!ObjectId.isValid(id)) {
         return res.status(400).json({ success: false, error: 'Invalid id' });
@@ -70,7 +71,8 @@ app.put('/api/message/:id', async (req, res) => {
             location: location ?? '',
             country: country ?? '',
             dob: dob ?? '',
-            address: address ?? ''
+            address: address ?? '',
+            gender: gender ?? ''
         }}
     );
 
