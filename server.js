@@ -20,15 +20,15 @@ async function connectDB() {
 connectDB();
 
 
-// POST API - Save message
-app.post('/api/message', async (req, res) => {
-    const { message, location, country, dob, address, gender } = req.body;
+// POST API - Create record
+app.post('/api/record', async (req, res) => {
+    const { name, email, phone, message, address, gender } = req.body;
 
     const doc = {
-        message: message || '',
-        location: location ?? '',
-        country: country ?? '',
-        dob: dob ?? '',
+        name: name ?? '',
+        email: email ?? '',
+        phone: phone ?? '',
+        message: message ?? '',
         address: address ?? '',
         gender: gender ?? ''
     };
@@ -43,22 +43,26 @@ app.post('/api/message', async (req, res) => {
 });
 
 
-// GET API - Get messages
-app.get('/api/messages', async (req, res) => {
+// GET API - Get records
+app.get('/api/records', async (req, res) => {
     const messages = await db.collection("messages").find().toArray();
-    // Ensure _id is always a string for the frontend
     const normalized = messages.map(doc => ({
-        ...doc,
-        _id: doc._id.toString()
+        _id: doc._id.toString(),
+        name: String(doc.name ?? ''),
+        email: String(doc.email ?? ''),
+        phone: String(doc.phone ?? ''),
+        message: String(doc.message ?? ''),
+        address: String(doc.address ?? ''),
+        gender: String(doc.gender ?? '')
     }));
     res.json(normalized);
 });
 
 
-// PUT API - Update message
-app.put('/api/message/:id', async (req, res) => {
+// PUT API - Update record
+app.put('/api/record/:id', async (req, res) => {
     const { id } = req.params;
-    const { message, location, country, dob, address, gender } = req.body;
+    const { name, email, phone, message, address, gender } = req.body;
 
     if (!ObjectId.isValid(id)) {
         return res.status(400).json({ success: false, error: 'Invalid id' });
@@ -67,17 +71,17 @@ app.put('/api/message/:id', async (req, res) => {
     const result = await db.collection("messages").updateOne(
         { _id: new ObjectId(id) },
         { $set: {
+            name: name ?? '',
+            email: email ?? '',
+            phone: phone ?? '',
             message: message ?? '',
-            location: location ?? '',
-            country: country ?? '',
-            dob: dob ?? '',
             address: address ?? '',
             gender: gender ?? ''
         }}
     );
 
     if (result.matchedCount === 0) {
-        return res.status(404).json({ success: false, error: 'Message not found' });
+        return res.status(404).json({ success: false, error: 'Record not found' });
     }
 
     res.json({ success: true });
@@ -85,7 +89,7 @@ app.put('/api/message/:id', async (req, res) => {
 
 
 // DELETE API - Delete message
-app.delete('/api/message/:id', async (req, res) => {
+app.delete('/api/record/:id', async (req, res) => {
     const { id } = req.params;
 
     if (!ObjectId.isValid(id)) {
@@ -95,7 +99,7 @@ app.delete('/api/message/:id', async (req, res) => {
     const result = await db.collection("messages").deleteOne({ _id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
-        return res.status(404).json({ success: false, error: 'Message not found' });
+        return res.status(404).json({ success: false, error: 'Record not found' });
     }
 
     res.json({ success: true });

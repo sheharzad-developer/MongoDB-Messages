@@ -177,6 +177,10 @@ th, td {
     text-align: left;
 }
 
+th:nth-child(1), td:nth-child(1) { min-width: 120px; }
+th:nth-child(2), td:nth-child(2) { min-width: 160px; }
+th:nth-child(3), td:nth-child(3) { min-width: 110px; }
+
 th {
     font-weight: 500;
     color: #9ca3af;

@@ -12,20 +12,20 @@
 
     <div class="form-row">
         <div class="form-field">
-            <label for="messageInput">Message</label>
-            <input type="text" id="messageInput" placeholder="Enter message">
+            <label for="nameMessage">Full Name</label>
+            <input type="text" id="nameMessage" placeholder="Enter Full Name">
         </div>
         <div class="form-field">
-            <label for="locationInput">Location</label>
-            <input type="text" id="locationInput" placeholder="City / Region">
+            <label for="emailMessage">Email</label>
+            <input type="text" id="emailMessage" placeholder="Enter Email">
         </div>
         <div class="form-field">
-            <label for="countryInput">Country</label>
-            <input type="text" id="countryInput" placeholder="Country">
+            <label for="phoneMessage">Phone</label>
+            <input type="text" id="phoneMessage" placeholder="Enter Phone">
         </div>
         <div class="form-field">
-            <label for="dobInput">Date of birth</label>
-            <input type="date" id="dobInput">
+            <label for="messageMessage">Message</label>
+            <input type="text" id="messageMessage" placeholder="Enter Message">
         </div>
         <div class="form-field">
             <label for="addressInput">Address</label>
@@ -43,22 +43,22 @@
     <div class="actions">
         <button class="btn btn-primary" id="saveBtn" onclick="saveOrUpdate()">Save record</button>
         <button class="btn btn-secondary" id="cancelEditBtn" style="display: none;" onclick="cancelEdit()">Cancel edit</button>
-        <button class="btn btn-secondary" onclick="loadMessages()">Refresh data</button>
+        <button class="btn btn-secondary" onclick="loadMessages()">Refresh Records</button>
     </div>
     <input type="hidden" id="editId" value="">
 
     <div class="table-card">
         <div class="table-header">
-            <div class="table-header-title">Stored messages</div>
-            <div class="table-header-caption">Live view of documents in the <span class="pill">messages</span> collection.</div>
+            <div class="table-header-title">Stored Records</div>   
+            <div class="table-header-caption">Live view of documents in the <span class="pill">messages</span> collection. Click Refresh to load.</div>
         </div>
         <table id="messagesTable">
             <thead>
                 <tr>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
                     <th>Message</th>
-                    <th>Location</th>
-                    <th>Country</th>
-                    <th>DOB</th>
                     <th>Address</th>
                     <th>Gender</th>
                     <th>Actions</th>
@@ -79,19 +79,19 @@ function getMessageId(item) {
 }
 
 function sendMessage() {
-    const message = document.getElementById("messageInput").value;
-    const location = document.getElementById("locationInput").value;
-    const country = document.getElementById("countryInput").value;
-    const dob = document.getElementById("dobInput").value;
-    const address = document.getElementById("addressInput").value;
+    const name = document.getElementById("nameMessage").value;
+    const email = document.getElementById("emailMessage").value;
+    const phone = document.getElementById("phoneMessage").value;
+    const message = document.getElementById("messageMessage").value;
     const gender = getGenderValue();
 
-    fetch('/api/message', {
+    const address = document.getElementById("addressInput").value;
+    fetch('/api/record', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message, location, country, dob, address, gender })
+        body: JSON.stringify({ name, email, phone, message, address, gender })
     })
     .then(res => res.json())
     .then(data => {
@@ -99,55 +99,55 @@ function sendMessage() {
     });
 }
 
+var TABLE_COLUMNS = ['name', 'email', 'phone', 'message', 'address', 'gender'];
+
+function displayValue(item, key) {
+    var v = item[key];
+    if (v == null || v === '') return '\u00A0';
+    if (key === 'gender') return v === 'male' ? 'Male' : v === 'female' ? 'Female' : v;
+    return v;
+}
+
 function loadMessages() {
-    fetch('/api/messages')
-    .then(res => res.json())
-    .then(data => {
-        const tbody = document.getElementById("messagesBody");
+    fetch('/api/records')
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+        var tbody = document.getElementById("messagesBody");
         tbody.innerHTML = "";
-
-        data.forEach(item => {
-            const tr = document.createElement("tr");
-
-            const tdMessage = document.createElement("td");
-            tdMessage.textContent = item.message || '';
-            tr.appendChild(tdMessage);
-
-            const tdLocation = document.createElement("td");
-            tdLocation.textContent = item.location || '';
-            tr.appendChild(tdLocation);
-
-            const tdCountry = document.createElement("td");
-            tdCountry.textContent = item.country || '';
-            tr.appendChild(tdCountry);
-
-            const tdDob = document.createElement("td");
-            tdDob.textContent = item.dob || '';
-            tr.appendChild(tdDob);
-
-            const tdAddress = document.createElement("td");
-            tdAddress.textContent = item.address || '';
-            tr.appendChild(tdAddress);
-
-            const tdGender = document.createElement("td");
-            tdGender.textContent = item.gender ? (item.gender === 'male' ? 'Male' : item.gender === 'female' ? 'Female' : item.gender) : '';
-            tr.appendChild(tdGender);
-
-            const tdActions = document.createElement("td");
-            const editBtn = document.createElement("button");
+        if (!result.ok) {
+            tbody.innerHTML = '<tr><td colspan="7" style="color:#ef4444;">Failed to load records.</td></tr>';
+            return;
+        }
+        var data = result.data;
+        if (!Array.isArray(data)) {
+            tbody.innerHTML = '<tr><td colspan="7" style="color:#ef4444;">Invalid response.</td></tr>';
+            return;
+        }
+        data.forEach(function(item) {
+            var tr = document.createElement("tr");
+            TABLE_COLUMNS.forEach(function(key) {
+                var td = document.createElement("td");
+                td.textContent = displayValue(item, key);
+                tr.appendChild(td);
+            });
+            var tdActions = document.createElement("td");
+            var editBtn = document.createElement("button");
             editBtn.className = "btn btn-secondary";
             editBtn.textContent = "Edit";
-            editBtn.onclick = () => editMessage(item);
-            const delBtn = document.createElement("button");
+            editBtn.onclick = function() { editMessage(item); };
+            var delBtn = document.createElement("button");
             delBtn.className = "btn btn-secondary";
             delBtn.textContent = "Delete";
-            delBtn.onclick = () => deleteMessage(getMessageId(item));
+            delBtn.onclick = function() { deleteMessage(getMessageId(item)); };
             tdActions.appendChild(editBtn);
             tdActions.appendChild(delBtn);
             tr.appendChild(tdActions);
-
             tbody.appendChild(tr);
         });
+    })
+    .catch(function(err) {
+        var tbody = document.getElementById("messagesBody");
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#ef4444;">Could not load records. Is the server running?</td></tr>';
     });
 }
 
@@ -167,10 +167,10 @@ function setGenderValue(value) {
 }
 
 function editMessage(item) {
-    document.getElementById("messageInput").value = item.message || '';
-    document.getElementById("locationInput").value = item.location || '';
-    document.getElementById("countryInput").value = item.country || '';
-    document.getElementById("dobInput").value = item.dob || '';
+    document.getElementById("nameMessage").value = item.name || '';
+    document.getElementById("emailMessage").value = item.email || '';
+    document.getElementById("phoneMessage").value = item.phone || '';
+    document.getElementById("messageMessage").value = item.message || '';
     document.getElementById("addressInput").value = item.address || '';
     setGenderValue(item.gender || '');
     document.getElementById("editId").value = getMessageId(item);
@@ -182,26 +182,26 @@ function cancelEdit() {
     document.getElementById("editId").value = '';
     document.getElementById("saveBtn").textContent = "Save record";
     document.getElementById("cancelEditBtn").style.display = "none";
-    document.getElementById("messageInput").value = '';
-    document.getElementById("locationInput").value = '';
-    document.getElementById("countryInput").value = '';
-    document.getElementById("dobInput").value = '';
+    document.getElementById("nameMessage").value = '';
+    document.getElementById("emailMessage").value = '';
+    document.getElementById("phoneMessage").value = '';
+    document.getElementById("messageMessage").value = '';
     document.getElementById("addressInput").value = '';
     setGenderValue('');
 }
 
 function saveOrUpdate() {
     const editId = document.getElementById("editId").value;
-    const message = document.getElementById("messageInput").value;
-    const location = document.getElementById("locationInput").value;
-    const country = document.getElementById("countryInput").value;
-    const dob = document.getElementById("dobInput").value;
+    const name = document.getElementById("nameMessage").value;
+    const email = document.getElementById("emailMessage").value;
+    const phone = document.getElementById("phoneMessage").value;
+    const message = document.getElementById("messageMessage").value;
     const address = document.getElementById("addressInput").value;
     const gender = getGenderValue();
-    const payload = { message, location, country, dob, address, gender };
+    const payload = { name, email, phone, message, address, gender };
 
     if (editId) {
-        fetch('/api/message/' + encodeURIComponent(editId), {
+        fetch('/api/record/' + encodeURIComponent(editId), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -218,7 +218,7 @@ function saveOrUpdate() {
         })
         .catch(() => alert("Update failed"));
     } else {
-        fetch('/api/message', {
+        fetch('/api/record', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -233,7 +233,7 @@ function saveOrUpdate() {
 
 function deleteMessage(id) {
     if (!confirm("Delete this record?")) return;
-    fetch('/api/message/' + id, { method: 'DELETE' })
+    fetch('/api/record/' + encodeURIComponent(id), { method: 'DELETE' })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
